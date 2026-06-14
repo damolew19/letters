@@ -1,36 +1,17 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Letters
 
-## Getting Started
+Instant messaging has flattened the way we talk to the people we love. Everything is fast, frictionless, forgettable — a stream of texts that disappears into itself. When a close friend moves to another city, or another country, the tools we reach for don't honour what that distance actually means.
 
-First, run the development server:
+Letters is built for a different kind of communication.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+It's a virtual letter app for close friends — slow, intentional, and beautiful. Not for meeting strangers. Not for building a network. For the one to five people you already love, and the distance that's grown between you.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+You write on real stationery. You choose your paper, your ink, your words. When you're ready, you seal it — a deliberate animation, fold by fold — and it's gone. You can't re-read it. You can't unseal it. Just like a real letter, the vulnerability of sending is part of the act.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Then you wait. You don't know when they'll open it.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+On their end, a red flag goes up on their mailbox. They open the envelope slowly — there's no skipping it. The letter unfolds, reveals itself as they scroll, as if reading for the first time. And then it lives in their keepsake box. Permanently. Yours to keep.
 
-## Learn More
+The ritual is the product. The weight, the anticipation, the permanence — that's what's been lost, and that's what Letters brings back.
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+It was built, first, as a gift for a friend.
