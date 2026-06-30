@@ -114,6 +114,79 @@ export const lettersRouter = createTRPCRouter({
     return rows;
   }),
 
+  // Letters delivered to the current user. Metadata only; the body is loaded
+  // separately when a letter is opened. `openedAt` drives the mailbox red flag.
+  listReceived: protectedProcedure.query(async ({ ctx }) => {
+    const rows = await db
+      .select({
+        id: letters.id,
+        senderName: user.name,
+        senderEmail: user.email,
+        paper: letters.paper,
+        sealedAt: letters.sealedAt,
+        openedAt: letters.openedAt,
+      })
+      .from(letters)
+      .leftJoin(user, eq(letters.senderId, user.id))
+      .where(
+        and(
+          eq(letters.recipientId, ctx.user.id),
+          isNotNull(letters.sealedAt),
+        ),
+      )
+      .orderBy(desc(letters.sealedAt));
+    return rows;
+  }),
+
+  // Full body of a received letter. Read-only so it can be re-read from the
+  // keepsake box; opening is stamped separately via `markOpened`.
+  getReceived: protectedProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      const [letter] = await db
+        .select({
+          id: letters.id,
+          recipientId: letters.recipientId,
+          content: letters.content,
+          paper: letters.paper,
+          ink: letters.ink,
+          font: letters.font,
+          senderName: user.name,
+          senderEmail: user.email,
+          sealedAt: letters.sealedAt,
+          openedAt: letters.openedAt,
+        })
+        .from(letters)
+        .leftJoin(user, eq(letters.senderId, user.id))
+        .where(eq(letters.id, input.id))
+        .limit(1);
+
+      if (!letter || !letter.sealedAt || letter.recipientId !== ctx.user.id) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Letter not found." });
+      }
+
+      const { recipientId, ...rest } = letter;
+      void recipientId;
+      return rest;
+    }),
+
+  // Stamp the first-open time. Idempotent: re-opens leave `openedAt` untouched.
+  markOpened: protectedProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      await db
+        .update(letters)
+        .set({ openedAt: new Date() })
+        .where(
+          and(
+            eq(letters.id, input.id),
+            eq(letters.recipientId, ctx.user.id),
+            isNull(letters.openedAt),
+          ),
+        );
+      return { ok: true as const };
+    }),
+
   // Metadata only: the sender cannot read a letter's content/excerpt once
   // it has been sealed, so neither field is selected here.
   listSent: protectedProcedure.query(async ({ ctx }) => {

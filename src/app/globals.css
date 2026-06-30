@@ -33,3 +33,25 @@ body {
   pointer-events: none;
   opacity: 0.4;
 }
+
+/* Scroll-to-reveal: each top-level block of an opened letter starts hidden and
+   eases in as it enters the viewport, as if read for the first time. */
+.reveal-block {
+  opacity: 0;
+  transform: translateY(1.25rem);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+  will-change: opacity, transform;
+}
+
+.reveal-block.revealed {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal-block {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
