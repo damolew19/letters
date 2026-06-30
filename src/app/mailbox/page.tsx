@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { SignOutButton } from "@/components/sign-out-button";
 import { InvitePanel } from "@/components/invite-panel";
 import { FriendsList } from "@/components/friends-list";
+import { DraftsPanel } from "@/components/drafts-panel";
 
 export default async function MailboxPage() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -30,12 +31,9 @@ export default async function MailboxPage() {
         </p>
 
         <div className="mt-10 grid gap-5">
+          <DraftsPanel />
           <InvitePanel />
           <FriendsList />
-        </div>
-
-        <div className="mt-5 rounded-2xl border border-dashed border-stone-300 bg-white p-10 text-center text-stone-400">
-          No letters yet. Composing comes next.
         </div>
       </main>
     </div>

@@ -5,6 +5,7 @@ import {
   uuid,
   index,
   unique,
+  jsonb,
 } from "drizzle-orm/pg-core";
 import { user } from "./auth-schema";
 
@@ -47,6 +48,8 @@ export const friendships = pgTable(
   ],
 );
 
+// A letter is a draft while `sealedAt` is null. Drafts may not yet have a
+// recipient or content, so those are nullable; both are required to send.
 export const letters = pgTable(
   "letters",
   {
@@ -54,14 +57,16 @@ export const letters = pgTable(
     senderId: text("sender_id")
       .notNull()
       .references(() => user.id),
-    recipientId: text("recipient_id")
-      .notNull()
-      .references(() => user.id),
-    content: text("content").notNull(),
-    theme: text("theme").notNull().default("default"),
-    sealedAt: timestamp("sealed_at").notNull().defaultNow(),
+    recipientId: text("recipient_id").references(() => user.id),
+    content: jsonb("content"),
+    excerpt: text("excerpt"),
+    paper: text("paper").notNull().default("cream"),
+    ink: text("ink").notNull().default("sepia"),
+    font: text("font").notNull().default("serif"),
+    sealedAt: timestamp("sealed_at"),
     openedAt: timestamp("opened_at"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
   (table) => [
     index("letters_recipient_id_idx").on(table.recipientId),
