@@ -1,7 +1,51 @@
-import { pgTable, text, timestamp, uuid, index } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+  index,
+  unique,
+} from "drizzle-orm/pg-core";
 import { user } from "./auth-schema";
 
 export * from "./auth-schema";
+
+// A reusable, per-user invite link. Rotating creates a new row and marks the
+// previous one revoked. Opening an active token and signing in forms a friendship.
+export const invites = pgTable(
+  "invites",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    inviterId: text("inviter_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    token: text("token").notNull().unique(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    revokedAt: timestamp("revoked_at"),
+  },
+  (table) => [index("invites_inviter_id_idx").on(table.inviterId)],
+);
+
+// Symmetric friendship stored as a single canonical row (userAId < userBId)
+// so each pair is unique regardless of who invited whom.
+export const friendships = pgTable(
+  "friendships",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userAId: text("user_a_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    userBId: text("user_b_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    unique("friendships_pair_unique").on(table.userAId, table.userBId),
+    index("friendships_user_a_idx").on(table.userAId),
+    index("friendships_user_b_idx").on(table.userBId),
+  ],
+);
 
 export const letters = pgTable(
   "letters",

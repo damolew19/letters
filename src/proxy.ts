@@ -5,10 +5,16 @@ import { getSessionCookie } from "better-auth/cookies";
 // Magic-link verification lives under /api/auth/* and is excluded by the matcher.
 const PUBLIC_PATHS = new Set(["/"]);
 
+// Public path prefixes (e.g. invite links must work for logged-out recipients).
+const PUBLIC_PREFIXES = ["/invite/"];
+
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  if (PUBLIC_PATHS.has(pathname)) {
+  if (
+    PUBLIC_PATHS.has(pathname) ||
+    PUBLIC_PREFIXES.some((prefix) => pathname.startsWith(prefix))
+  ) {
     return NextResponse.next();
   }
 

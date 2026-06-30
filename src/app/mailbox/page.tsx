@@ -2,6 +2,8 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { SignOutButton } from "@/components/sign-out-button";
+import { InvitePanel } from "@/components/invite-panel";
+import { FriendsList } from "@/components/friends-list";
 
 export default async function MailboxPage() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -17,7 +19,7 @@ export default async function MailboxPage() {
         <span className="font-serif text-xl">Letters</span>
         <SignOutButton />
       </header>
-      <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-16">
+      <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-12">
         <h1 className="font-serif text-3xl tracking-tight">Your mailbox</h1>
         <p className="mt-2 text-stone-500">
           Welcome,{" "}
@@ -26,8 +28,14 @@ export default async function MailboxPage() {
           </span>
           .
         </p>
-        <div className="mt-10 rounded-2xl border border-dashed border-stone-300 bg-white p-10 text-center text-stone-400">
-          No letters yet. Friends &amp; composing come next.
+
+        <div className="mt-10 grid gap-5">
+          <InvitePanel />
+          <FriendsList />
+        </div>
+
+        <div className="mt-5 rounded-2xl border border-dashed border-stone-300 bg-white p-10 text-center text-stone-400">
+          No letters yet. Composing comes next.
         </div>
       </main>
     </div>
