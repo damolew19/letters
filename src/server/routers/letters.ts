@@ -1,4 +1,4 @@
-import { and, desc, eq, isNull } from "drizzle-orm";
+import { and, desc, eq, isNotNull, isNull } from "drizzle-orm";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { db } from "@/db";
@@ -111,6 +111,26 @@ export const lettersRouter = createTRPCRouter({
       .leftJoin(user, eq(letters.recipientId, user.id))
       .where(and(eq(letters.senderId, ctx.user.id), isNull(letters.sealedAt)))
       .orderBy(desc(letters.updatedAt));
+    return rows;
+  }),
+
+  // Metadata only: the sender cannot read a letter's content/excerpt once
+  // it has been sealed, so neither field is selected here.
+  listSent: protectedProcedure.query(async ({ ctx }) => {
+    const rows = await db
+      .select({
+        id: letters.id,
+        recipientName: user.name,
+        recipientEmail: user.email,
+        sealedAt: letters.sealedAt,
+        openedAt: letters.openedAt,
+      })
+      .from(letters)
+      .leftJoin(user, eq(letters.recipientId, user.id))
+      .where(
+        and(eq(letters.senderId, ctx.user.id), isNotNull(letters.sealedAt)),
+      )
+      .orderBy(desc(letters.sealedAt));
     return rows;
   }),
 

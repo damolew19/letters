@@ -1,11 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { AnimatePresence } from "motion/react";
 import type { JSONContent } from "@tiptap/react";
 import { useDebouncedCallback } from "use-debounce";
 import { trpc } from "@/lib/trpc/client";
 import { LetterEditor } from "@/components/letter-editor";
+import { SealAnimation } from "@/components/seal-animation";
 import {
   PAPERS,
   INKS,
@@ -33,6 +36,13 @@ export function Composer({ draftId }: { draftId: string }) {
   const [font, setFont] = useState<FontKey>("serif");
   const [status, setStatus] = useState<SaveStatus>("idle");
   const [hasContent, setHasContent] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [sending, setSending] = useState(false);
+
+  // Sealing finishes (redirects) only once both the animation and the send
+  // mutation have completed; these refs let either completion order win.
+  const animDone = useRef(false);
+  const sendOk = useRef(false);
 
   // Latest editor content, kept in a ref so saves always send the newest value.
   const contentRef = useRef<JSONContent | null>(null);
@@ -87,25 +97,48 @@ export function Composer({ draftId }: { draftId: string }) {
     };
   }, [scheduleSave]);
 
+  const finish = useCallback(() => {
+    if (animDone.current && sendOk.current) {
+      router.push("/mailbox");
+    }
+  }, [router]);
+
   const sendMutation = trpc.letters.send.useMutation({
     onSuccess: async () => {
-      await utils.letters.listDrafts.invalidate();
-      router.push("/mailbox");
+      await Promise.all([
+        utils.letters.listDrafts.invalidate(),
+        utils.letters.listSent.invalidate(),
+      ]);
+      sendOk.current = true;
+      finish();
+    },
+    onError: () => {
+      setSending(false);
+      animDone.current = false;
     },
   });
 
-  async function handleSend() {
-    // Persist the latest edits before sealing so the server sees current content.
-    await saveMutation.mutateAsync({
-      id: draftId,
-      content: contentRef.current ?? undefined,
-      excerpt: excerptRef.current,
-      recipientId,
-      paper,
-      ink,
-      font,
-    });
-    sendMutation.mutate({ id: draftId });
+  async function handleConfirmSend() {
+    setConfirmOpen(false);
+    scheduleSave.cancel();
+    animDone.current = false;
+    sendOk.current = false;
+    setSending(true);
+    try {
+      // Persist the latest edits before sealing so the server sees current content.
+      await saveMutation.mutateAsync({
+        id: draftId,
+        content: contentRef.current ?? undefined,
+        excerpt: excerptRef.current,
+        recipientId,
+        paper,
+        ink,
+        font,
+      });
+      sendMutation.mutate({ id: draftId });
+    } catch {
+      setSending(false);
+    }
   }
 
   function handleEditorUpdate({
@@ -147,9 +180,20 @@ export function Composer({ draftId }: { draftId: string }) {
     );
   }
   if (draftQuery.error) {
+    const sealed = draftQuery.error.data?.code === "BAD_REQUEST";
     return (
       <div className="py-20 text-center text-stone-500">
-        {draftQuery.error.message}
+        <p>
+          {sealed
+            ? "This letter has been sealed and sent."
+            : draftQuery.error.message}
+        </p>
+        <Link
+          href="/mailbox"
+          className="mt-3 inline-block text-sm text-stone-700 underline underline-offset-4 hover:text-stone-900"
+        >
+          Back to mailbox
+        </Link>
       </div>
     );
   }
@@ -252,19 +296,57 @@ export function Composer({ draftId }: { draftId: string }) {
             <span>{statusLabel(status)}</span>
           </div>
           <button
-            onClick={handleSend}
-            disabled={!canSend || sendMutation.isPending}
+            onClick={() => setConfirmOpen(true)}
+            disabled={!canSend || sending}
             className="mt-3 inline-flex h-11 w-full items-center justify-center rounded-full bg-stone-900 px-5 text-sm font-medium text-stone-50 transition-colors hover:bg-stone-700 disabled:opacity-50"
           >
-            {sendMutation.isPending ? "Sealing…" : "Seal & send"}
+            {sending ? "Sealing…" : "Seal & send"}
           </button>
-          {sendMutation.error && (
+          {sendMutation.error && !sending && (
             <p className="mt-2 text-xs text-red-600">
               {sendMutation.error.message}
             </p>
           )}
         </div>
       </aside>
+
+      {confirmOpen && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-stone-900/40 p-6">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
+            <h2 className="font-serif text-xl text-stone-900">Seal this letter?</h2>
+            <p className="mt-2 text-sm text-stone-500">
+              Once sealed, you can&apos;t edit or read this letter again. It will
+              be on its way to your correspondent.
+            </p>
+            <div className="mt-5 flex justify-end gap-3">
+              <button
+                onClick={() => setConfirmOpen(false)}
+                className="inline-flex h-10 items-center justify-center rounded-full px-4 text-sm font-medium text-stone-600 transition-colors hover:bg-stone-100"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmSend}
+                className="inline-flex h-10 items-center justify-center rounded-full bg-stone-900 px-5 text-sm font-medium text-stone-50 transition-colors hover:bg-stone-700"
+              >
+                Seal &amp; send
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <AnimatePresence>
+        {sending && (
+          <SealAnimation
+            theme={{ paper, ink, font }}
+            onComplete={() => {
+              animDone.current = true;
+              finish();
+            }}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

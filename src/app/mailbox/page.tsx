@@ -5,6 +5,7 @@ import { SignOutButton } from "@/components/sign-out-button";
 import { InvitePanel } from "@/components/invite-panel";
 import { FriendsList } from "@/components/friends-list";
 import { DraftsPanel } from "@/components/drafts-panel";
+import { SentPanel } from "@/components/sent-panel";
 
 export default async function MailboxPage() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -32,6 +33,7 @@ export default async function MailboxPage() {
 
         <div className="mt-10 grid gap-5">
           <DraftsPanel />
+          <SentPanel />
           <InvitePanel />
           <FriendsList />
         </div>
