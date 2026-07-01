@@ -1,10 +1,10 @@
 import { and, eq, isNull } from "drizzle-orm";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { db } from "@/db";
-import { invites, friendships, user } from "@/db/schema";
-import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
-import { generateInviteToken, inviteUrl, orderPair } from "@/lib/invite";
+import { db } from "@/server/db";
+import { invites, friendships, user } from "@/server/db/schema";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "../lib/trpc";
+import { generateInviteToken, inviteUrl, orderPair } from "@/server/lib/invite";
 
 async function getOrCreateToken(inviterId: string) {
   const [existing] = await db

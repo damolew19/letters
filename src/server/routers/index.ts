@@ -1,4 +1,4 @@
-import { createTRPCRouter } from "../trpc";
+import { createTRPCRouter } from "../lib/trpc";
 import { inviteRouter } from "./invite";
 import { friendsRouter } from "./friends";
 import { lettersRouter } from "./letters";

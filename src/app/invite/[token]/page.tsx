@@ -1,10 +1,10 @@
 import { headers } from "next/headers";
 import Link from "next/link";
 import { and, eq, isNull } from "drizzle-orm";
-import { db } from "@/db";
-import { invites, user } from "@/db/schema";
-import { auth } from "@/lib/auth";
-import { MagicLinkForm } from "@/components/magic-link-form";
+import { db } from "@/server/db";
+import { invites, user } from "@/server/db/schema";
+import { auth } from "@/server/auth";
+import { MagicLinkForm } from "@/client/components/magic-link-form";
 import { InviteAccept } from "./_components/invite-accept";
 
 function Shell({ children }: { children: React.ReactNode }) {

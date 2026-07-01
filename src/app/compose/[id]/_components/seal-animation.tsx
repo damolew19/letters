@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "motion/react";
-import { paperBg, inkColor, fontFamily } from "@/lib/letter-theme";
+import { paperBg, inkColor, fontFamily } from "@/lib/theme/letter";
 
 type Stage = "fold" | "seal" | "drop";
 

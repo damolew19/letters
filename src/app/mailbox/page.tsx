@@ -1,6 +1,6 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { auth } from "@/server/auth";
 import { SignOutButton } from "./_components/sign-out-button";
 import { InvitePanel } from "./_components/invite-panel";
 import { FriendsList } from "./_components/friends-list";

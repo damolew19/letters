@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { auth } from "@/server/auth";
 import { LetterReader } from "./_components/letter-reader";
 
 export default async function LetterPage({

@@ -1,7 +1,7 @@
 import { initTRPC, TRPCError } from "@trpc/server";
 import type { FetchCreateContextFnOptions } from "@trpc/server/adapters/fetch";
 import { ZodError } from "zod";
-import { auth } from "@/lib/auth";
+import { auth } from "@/server/auth";
 
 export const createTRPCContext = async (opts: FetchCreateContextFnOptions) => {
   const session = await auth.api.getSession({ headers: opts.req.headers });

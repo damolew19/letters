@@ -2,8 +2,8 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { magicLink } from "better-auth/plugins";
 import { nextCookies } from "better-auth/next-js";
-import { db } from "@/db";
-import { sendMagicLinkEmail } from "@/lib/email";
+import { db } from "@/server/db";
+import { sendMagicLinkEmail } from "@/server/lib/email";
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {

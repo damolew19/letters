@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { authClient } from "@/lib/auth-client";
+import { authClient } from "@/client/lib/auth";
 
 type Status = "idle" | "loading" | "sent" | "error";
 

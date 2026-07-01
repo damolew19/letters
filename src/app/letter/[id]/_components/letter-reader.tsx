@@ -7,7 +7,7 @@ import { useEditor, EditorContent, type JSONContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { trpc } from "@/lib/trpc/client";
 import { EnvelopeOpen } from "./envelope-open";
-import { paperBg, inkColor, fontFamily } from "@/lib/letter-theme";
+import { paperBg, inkColor, fontFamily } from "@/lib/theme/letter";
 
 type Phase = "sealed" | "opening" | "open";
 

@@ -1,7 +1,7 @@
 import { eq, or, inArray } from "drizzle-orm";
-import { db } from "@/db";
-import { friendships, user } from "@/db/schema";
-import { createTRPCRouter, protectedProcedure } from "../trpc";
+import { db } from "@/server/db";
+import { friendships, user } from "@/server/db/schema";
+import { createTRPCRouter, protectedProcedure } from "../lib/trpc";
 
 export const friendsRouter = createTRPCRouter({
   list: protectedProcedure.query(async ({ ctx }) => {

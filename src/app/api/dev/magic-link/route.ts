@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getDevMagicLink } from "@/lib/email";
+import { getDevMagicLink } from "@/server/lib/email";
 
 // Dev-only helper: returns the most recent magic link for an email so the UI can
 // sign in directly without checking an inbox. Disabled in production.

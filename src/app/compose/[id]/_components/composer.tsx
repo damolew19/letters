@@ -19,7 +19,7 @@ import {
   type PaperKey,
   type InkKey,
   type FontKey,
-} from "@/lib/letter-theme";
+} from "@/lib/theme/letter";
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
 

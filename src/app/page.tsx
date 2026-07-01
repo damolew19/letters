@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { authClient } from "@/lib/auth-client";
-import { MagicLinkForm } from "@/components/magic-link-form";
+import { authClient } from "@/client/lib/auth";
+import { MagicLinkForm } from "@/client/components/magic-link-form";
 
 export default function Home() {
   const { data: session, isPending } = authClient.useSession();

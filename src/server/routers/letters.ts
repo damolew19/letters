@@ -1,10 +1,10 @@
 import { and, desc, eq, isNotNull, isNull } from "drizzle-orm";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { db } from "@/db";
-import { letters, friendships, user } from "@/db/schema";
-import { createTRPCRouter, protectedProcedure } from "../trpc";
-import { orderPair } from "@/lib/invite";
+import { db } from "@/server/db";
+import { letters, friendships, user } from "@/server/db/schema";
+import { createTRPCRouter, protectedProcedure } from "../lib/trpc";
+import { orderPair } from "@/server/lib/invite";
 
 // Throws unless `recipientId` is a confirmed friend of the current user.
 async function assertFriend(meId: string, recipientId: string) {
