@@ -5,7 +5,7 @@ import { db } from "@/db";
 import { invites, user } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { MagicLinkForm } from "@/components/magic-link-form";
-import { InviteAccept } from "@/components/invite-accept";
+import { InviteAccept } from "./_components/invite-accept";
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (

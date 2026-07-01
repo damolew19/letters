@@ -7,8 +7,8 @@ import { AnimatePresence } from "motion/react";
 import type { JSONContent } from "@tiptap/react";
 import { useDebouncedCallback } from "use-debounce";
 import { trpc } from "@/lib/trpc/client";
-import { LetterEditor } from "@/components/letter-editor";
-import { SealAnimation } from "@/components/seal-animation";
+import { LetterEditor } from "./letter-editor";
+import { SealAnimation } from "./seal-animation";
 import {
   PAPERS,
   INKS,

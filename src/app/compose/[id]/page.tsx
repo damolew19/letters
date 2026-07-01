@@ -2,7 +2,7 @@ import { headers } from "next/headers";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
-import { Composer } from "@/components/composer";
+import { Composer } from "./_components/composer";
 
 export default async function ComposePage({
   params,

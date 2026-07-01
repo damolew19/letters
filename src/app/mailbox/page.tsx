@@ -1,12 +1,12 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
-import { SignOutButton } from "@/components/sign-out-button";
-import { InvitePanel } from "@/components/invite-panel";
-import { FriendsList } from "@/components/friends-list";
-import { DraftsPanel } from "@/components/drafts-panel";
-import { SentPanel } from "@/components/sent-panel";
-import { ReceivedPanel } from "@/components/received-panel";
+import { SignOutButton } from "./_components/sign-out-button";
+import { InvitePanel } from "./_components/invite-panel";
+import { FriendsList } from "./_components/friends-list";
+import { DraftsPanel } from "./_components/drafts-panel";
+import { SentPanel } from "./_components/sent-panel";
+import { ReceivedPanel } from "./_components/received-panel";
 
 export default async function MailboxPage() {
   const session = await auth.api.getSession({ headers: await headers() });
