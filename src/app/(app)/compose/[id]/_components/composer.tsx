@@ -204,10 +204,10 @@ export function Composer({ draftId }: { draftId: string }) {
   const canSend = !!recipientId && hasContent;
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1fr_16rem]">
+    <div className="flex flex-col gap-6">
       {/* Stationery sheet */}
       <div
-        className="order-2 rounded-2xl border border-stone-200 shadow-sm lg:order-1"
+        className="order-2 rounded-2xl border border-stone-200 shadow-sm"
         style={{
           backgroundColor: paperBg(paper),
           color: inkColor(ink),
@@ -223,7 +223,7 @@ export function Composer({ draftId }: { draftId: string }) {
       </div>
 
       {/* Side panel */}
-      <aside className="order-1 flex flex-col gap-5 lg:order-2">
+      <aside className="order-1 flex flex-col gap-5">
         <div className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
           <label className="block text-xs font-medium uppercase tracking-wide text-stone-500">
             To
