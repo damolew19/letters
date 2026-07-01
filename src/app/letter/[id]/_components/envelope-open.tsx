@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "motion/react";
-import { paperBg } from "@/lib/theme/letter";
+import { paperBg } from "@/client/lib/theme";
 
 type Stage = "crack" | "open" | "rise";
 

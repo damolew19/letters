@@ -6,7 +6,7 @@ import Link from "next/link";
 import { AnimatePresence } from "motion/react";
 import type { JSONContent } from "@tiptap/react";
 import { useDebouncedCallback } from "use-debounce";
-import { trpc } from "@/lib/trpc/client";
+import { trpc } from "@/client/lib/trpc";
 import { LetterEditor } from "./letter-editor";
 import { SealAnimation } from "./seal-animation";
 import {
@@ -19,7 +19,7 @@ import {
   type PaperKey,
   type InkKey,
   type FontKey,
-} from "@/lib/theme/letter";
+} from "@/client/lib/theme";
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
 

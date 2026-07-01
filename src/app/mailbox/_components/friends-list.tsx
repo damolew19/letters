@@ -1,6 +1,6 @@
 "use client";
 
-import { trpc } from "@/lib/trpc/client";
+import { trpc } from "@/client/lib/trpc";
 
 export function FriendsList() {
   const { data: friends, isPending } = trpc.friends.list.useQuery();

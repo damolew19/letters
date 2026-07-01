@@ -1,6 +1,6 @@
 "use client";
 
-import { trpc } from "@/lib/trpc/client";
+import { trpc } from "@/client/lib/trpc";
 
 export function SentPanel() {
   const sent = trpc.letters.listSent.useQuery();

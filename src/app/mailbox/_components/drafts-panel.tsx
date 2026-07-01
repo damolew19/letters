@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { trpc } from "@/lib/trpc/client";
+import { trpc } from "@/client/lib/trpc";
 
 export function DraftsPanel() {
   const router = useRouter();

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { trpc } from "@/lib/trpc/client";
+import { trpc } from "@/client/lib/trpc";
 
 export function InvitePanel() {
   const utils = trpc.useUtils();

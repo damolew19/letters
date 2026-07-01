@@ -5,9 +5,9 @@ import Link from "next/link";
 import { AnimatePresence } from "motion/react";
 import { useEditor, EditorContent, type JSONContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import { trpc } from "@/lib/trpc/client";
+import { trpc } from "@/client/lib/trpc";
 import { EnvelopeOpen } from "./envelope-open";
-import { paperBg, inkColor, fontFamily } from "@/lib/theme/letter";
+import { paperBg, inkColor, fontFamily } from "@/client/lib/theme";
 
 type Phase = "sealed" | "opening" | "open";
 

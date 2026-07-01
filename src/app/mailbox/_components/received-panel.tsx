@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { trpc } from "@/lib/trpc/client";
+import { trpc } from "@/client/lib/trpc";
 
 export function ReceivedPanel() {
   const received = trpc.letters.listReceived.useQuery();
