@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { trpc } from "@/client/lib/trpc";
+import { Button } from "@/client/components/ui/button";
 
 export function InvitePanel() {
   const utils = trpc.useUtils();
@@ -32,22 +33,23 @@ export function InvitePanel() {
           value={isPending ? "Loading…" : (data?.url ?? "")}
           className="h-10 flex-1 rounded-lg border border-stone-300 bg-stone-50 px-3 text-sm text-stone-700 outline-none"
         />
-        <button
+        <Button
           onClick={copy}
           disabled={!data?.url}
-          className="h-10 shrink-0 rounded-lg bg-stone-900 px-4 text-sm font-medium text-stone-50 transition-colors hover:bg-stone-700 disabled:opacity-60"
+          className="shrink-0 px-4"
         >
           {copied ? "Copied" : "Copy"}
-        </button>
+        </Button>
       </div>
 
-      <button
+      <Button
+        variant="link"
         onClick={() => rotate.mutate()}
         disabled={rotate.isPending}
-        className="mt-3 text-xs text-stone-500 underline underline-offset-4 hover:text-stone-900 disabled:opacity-60"
+        className="mt-3 text-xs"
       >
         {rotate.isPending ? "Rotating…" : "Rotate link (revokes the old one)"}
-      </button>
+      </Button>
     </section>
   );
 }

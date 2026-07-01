@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { trpc } from "@/client/lib/trpc";
+import { Button } from "@/client/components/ui/button";
 
 export function InviteAccept({
   token,
@@ -29,15 +30,15 @@ export function InviteAccept({
       {accept.error && (
         <p className="mt-3 text-sm text-red-600">{accept.error.message}</p>
       )}
-      <button
+      <Button
         onClick={() => accept.mutate({ token })}
         disabled={accept.isPending || accept.isSuccess}
-        className="mt-4 inline-flex h-11 w-full items-center justify-center rounded-full bg-stone-900 px-5 text-sm font-medium text-stone-50 transition-colors hover:bg-stone-700 disabled:opacity-60"
+        className="mt-4 h-11 w-full"
       >
         {accept.isPending || accept.isSuccess
           ? "Connecting…"
           : `Accept invitation`}
-      </button>
+      </Button>
     </div>
   );
 }

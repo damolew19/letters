@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { authClient } from "@/client/lib/auth";
+import { Button } from "@/client/components/ui/button";
 
 type Status = "idle" | "loading" | "sent" | "error";
 
@@ -50,12 +51,9 @@ export function MagicLinkForm({ callbackURL }: { callbackURL: string }) {
           <span className="text-stone-900">{email}</span>. The link expires in 5
           minutes.
         </p>
-        <button
-          onClick={() => setStatus("idle")}
-          className="mt-4 text-sm text-stone-500 underline underline-offset-4 hover:text-stone-900"
-        >
+        <Button variant="link" onClick={() => setStatus("idle")} className="mt-4">
           Use a different email
-        </button>
+        </Button>
       </div>
     );
   }
@@ -81,13 +79,13 @@ export function MagicLinkForm({ callbackURL }: { callbackURL: string }) {
       {status === "error" && (
         <p className="mt-2 text-sm text-red-600">{error}</p>
       )}
-      <button
+      <Button
         type="submit"
         disabled={status === "loading"}
-        className="mt-4 inline-flex h-11 w-full items-center justify-center rounded-full bg-stone-900 px-5 text-sm font-medium text-stone-50 transition-colors hover:bg-stone-700 disabled:opacity-60"
+        className="mt-4 h-11 w-full"
       >
         {status === "loading" ? "Sending link…" : "Send me a sign-in link"}
-      </button>
+      </Button>
       <p className="mt-3 text-center text-xs text-stone-400">
         No passwords. We email you a magic link.
       </p>

@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { trpc } from "@/client/lib/trpc";
+import { Button } from "@/client/components/ui/button";
 
 export function DraftsPanel() {
   const router = useRouter();
@@ -14,13 +15,13 @@ export function DraftsPanel() {
     <section className="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm">
       <div className="flex items-center justify-between">
         <h2 className="font-medium text-stone-900">Drafts</h2>
-        <button
+        <Button
           onClick={() => createDraft.mutate()}
           disabled={createDraft.isPending}
-          className="inline-flex h-9 items-center justify-center rounded-full bg-stone-900 px-4 text-sm font-medium text-stone-50 transition-colors hover:bg-stone-700 disabled:opacity-60"
+          className="h-9 px-4"
         >
           {createDraft.isPending ? "Opening…" : "Write a letter"}
-        </button>
+        </Button>
       </div>
 
       {drafts.isLoading ? (

@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { authClient } from "@/client/lib/auth";
+import { Button } from "@/client/components/ui/button";
 
 export function SignOutButton() {
   const router = useRouter();
@@ -13,11 +14,8 @@ export function SignOutButton() {
   }
 
   return (
-    <button
-      onClick={onSignOut}
-      className="text-sm text-stone-500 underline underline-offset-4 hover:text-stone-900"
-    >
+    <Button variant="link" onClick={onSignOut}>
       Sign out
-    </button>
+    </Button>
   );
 }

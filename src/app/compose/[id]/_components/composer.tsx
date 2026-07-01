@@ -7,6 +7,7 @@ import { AnimatePresence } from "motion/react";
 import type { JSONContent } from "@tiptap/react";
 import { useDebouncedCallback } from "use-debounce";
 import { trpc } from "@/client/lib/trpc";
+import { Button } from "@/client/components/ui/button";
 import { LetterEditor } from "./letter-editor";
 import { SealAnimation } from "./seal-animation";
 import {
@@ -295,13 +296,13 @@ export function Composer({ draftId }: { draftId: string }) {
           <div className="flex items-center justify-between text-xs text-stone-400">
             <span>{statusLabel(status)}</span>
           </div>
-          <button
+          <Button
             onClick={() => setConfirmOpen(true)}
             disabled={!canSend || sending}
-            className="mt-3 inline-flex h-11 w-full items-center justify-center rounded-full bg-stone-900 px-5 text-sm font-medium text-stone-50 transition-colors hover:bg-stone-700 disabled:opacity-50"
+            className="mt-3 h-11 w-full"
           >
             {sending ? "Sealing…" : "Seal & send"}
-          </button>
+          </Button>
           {sendMutation.error && !sending && (
             <p className="mt-2 text-xs text-red-600">
               {sendMutation.error.message}
@@ -319,18 +320,10 @@ export function Composer({ draftId }: { draftId: string }) {
               be on its way to your correspondent.
             </p>
             <div className="mt-5 flex justify-end gap-3">
-              <button
-                onClick={() => setConfirmOpen(false)}
-                className="inline-flex h-10 items-center justify-center rounded-full px-4 text-sm font-medium text-stone-600 transition-colors hover:bg-stone-100"
-              >
+              <Button variant="ghost" onClick={() => setConfirmOpen(false)}>
                 Cancel
-              </button>
-              <button
-                onClick={handleConfirmSend}
-                className="inline-flex h-10 items-center justify-center rounded-full bg-stone-900 px-5 text-sm font-medium text-stone-50 transition-colors hover:bg-stone-700"
-              >
-                Seal &amp; send
-              </button>
+              </Button>
+              <Button onClick={handleConfirmSend}>Seal &amp; send</Button>
             </div>
           </div>
         </div>
