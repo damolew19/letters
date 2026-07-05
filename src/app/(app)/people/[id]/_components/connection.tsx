@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { trpc } from "@/client/lib/trpc";
@@ -10,6 +11,42 @@ function formatDate(value: string | Date | null | undefined) {
     month: "short",
     day: "numeric",
   });
+}
+
+function formatMonthYear(value: string | Date | null | undefined) {
+  if (!value) return "";
+  return new Date(value).toLocaleDateString(undefined, {
+    month: "long",
+    year: "numeric",
+  });
+}
+
+// A turnaround in days → a human phrase for the ledger.
+function formatDays(n: number | null | undefined) {
+  if (n == null) return "—";
+  if (n < 0.5) return "same day";
+  const r = Math.round(n);
+  return `${r} day${r === 1 ? "" : "s"}`;
+}
+
+// Days since the last letter → "today" / "yesterday" / "N days ago".
+function formatSince(days: number | null | undefined) {
+  if (days == null) return "—";
+  if (days <= 0) return "today";
+  if (days === 1) return "yesterday";
+  return `${days} days ago`;
+}
+
+// How long you took to open a letter → hours, rolling up to days.
+function formatOpenSpeed(hours: number | null | undefined) {
+  if (hours == null) return "—";
+  if (hours < 1) return "within the hour";
+  if (hours < 36) {
+    const r = Math.round(hours);
+    return `${r} hour${r === 1 ? "" : "s"}`;
+  }
+  const d = Math.round(hours / 24);
+  return `${d} day${d === 1 ? "" : "s"}`;
 }
 
 function initials(source: string) {
@@ -32,8 +69,7 @@ function tintFor(seed: string) {
   return TINTS[Math.abs(hash) % TINTS.length]!;
 }
 
-// Author colors, reused by the timeline and the balance meter.
-const INK_YOU = "#8a8178";
+// Their ink — used to mark incoming/unread letters in the record.
 const INK_THEM = "#bc6c47";
 
 const TURN_LABEL = {
@@ -48,6 +84,7 @@ export function Connection({ id }: { id: string }) {
   const { data, isPending, error } = trpc.friends.connection.useQuery({ id });
   const createDraft = trpc.letters.createDraft.useMutation();
   const saveDraft = trpc.letters.saveDraft.useMutation();
+  const [tab, setTab] = useState<"letters" | "stats">("letters");
 
   if (isPending) {
     return <p className="pt-8 text-sm italic text-[#a89f95]">Gathering your letters…</p>;
@@ -60,7 +97,18 @@ export function Connection({ id }: { id: string }) {
     );
   }
 
-  const { person, totals, months, readingMinutes, timeline, draft, history } = data;
+  const {
+    person,
+    totals,
+    readingMinutes,
+    draft,
+    history,
+    unread,
+    unreadWords,
+    firstUnreadId,
+    rhythm,
+    longestLetter,
+  } = data;
   const who = person.name || person.email || "A correspondent";
   const firstName = (person.name || person.email || "them").split(" ")[0];
   const tint = tintFor(person.email || who);
@@ -82,8 +130,40 @@ export function Connection({ id }: { id: string }) {
     router.push(`/compose/${draftId}`);
   }
 
-  const maxMonth = Math.max(1, ...timeline.map((m) => m.you + m.them));
-  const total = totals.total || 1;
+  // "The story so far" — a written summary of the correspondence.
+  const moreWriter =
+    totals.sent > totals.received ? "you" : totals.sent < totals.received ? firstName : null;
+  const writerClause = moreWriter
+    ? `${moreWriter === "you" ? "You" : moreWriter} write${moreWriter === "you" ? "" : "s"} a little more often.`
+    : "You two write about evenly.";
+  const replyStr =
+    rhythm.yourReplyDays == null
+      ? null
+      : rhythm.yourReplyDays < 0.5
+        ? "a day"
+        : formatDays(rhythm.yourReplyDays);
+
+  const ledger: [string, string][] = [
+    ["First letter", `${formatMonthYear(data.since)} · from ${firstName}`],
+    ["Last letter", formatSince(rhythm.daysSinceLast)],
+    ["You reply in", formatDays(rhythm.yourReplyDays)],
+    [`${firstName} replies in`, formatDays(rhythm.theirReplyDays)],
+    ["Fastest reply", formatDays(rhythm.fastestReplyDays)],
+    [
+      "Longest silence",
+      rhythm.longestSilenceDays != null ? `${rhythm.longestSilenceDays} days` : "—",
+    ],
+    ["You open their letters", formatOpenSpeed(rhythm.openLatencyHours)],
+    ...(longestLetter
+      ? ([
+          [
+            "Longest letter",
+            `${longestLetter.words.toLocaleString()} words · ${longestLetter.dir === "out" ? "you" : firstName}`,
+          ],
+        ] as [string, string][])
+      : []),
+    ["Words read", `${data.wordsRead.toLocaleString()} · ~${readingMinutes} min`],
+  ];
 
   return (
     <div>
@@ -113,19 +193,14 @@ export function Connection({ id }: { id: string }) {
                 ? `Corresponding since ${formatDate(data.since)} · ${totals.total} letters`
                 : "No letters yet"}
             </span>
-            <span className="rounded-full border border-[#e7e0d6] px-2 py-0.5 text-[11px] uppercase tracking-wider text-[#8a8178]">
-              {TURN_LABEL[turn]}
-            </span>
+            {!draft && (
+              <span className="rounded-full border border-[#e7e0d6] px-2 py-0.5 text-[11px] uppercase tracking-wider text-[#8a8178]">
+                {TURN_LABEL[turn]}
+              </span>
+            )}
           </div>
         </div>
-        {draft ? (
-          <Link
-            href={`/compose/${draft.id}`}
-            className="shrink-0 rounded-full bg-[#bc6c47] px-4 py-2 text-sm font-medium text-[#faf7f2] transition-colors hover:bg-[#a1542f]"
-          >
-            Continue your letter
-          </Link>
-        ) : (
+        {!draft && (
           <button
             type="button"
             onClick={writeTo}
@@ -139,150 +214,154 @@ export function Connection({ id }: { id: string }) {
 
       <hr className="mt-6 border-[#e7e0d6]" />
 
-      {/* Unfinished letter — the draft to this person lives on their page */}
-      {draft && (
-        <Link
-          href={`/compose/${draft.id}`}
-          className="mt-8 flex items-center gap-4 rounded-2xl border border-[#e7e0d6] bg-white/60 p-4 transition-colors hover:border-[#d8ccba] hover:bg-white/90"
-        >
-          <span
-            className="h-9 w-9 shrink-0 rounded-full border border-dashed border-[#d3c9b8]"
-            aria-hidden
-          />
-          <span className="min-w-0 flex-1">
-            <span className="block text-[11px] uppercase tracking-wider text-[#a89f95]">
-              Unfinished letter
-            </span>
-            <span className="block truncate text-sm italic text-[#6f665c]">
-              {draft.excerpt?.trim() || "Empty letter"}
-            </span>
-          </span>
-          <span className="shrink-0 text-xs text-[#a89f95]">
-            {formatDate(draft.updatedAt)}
-          </span>
-        </Link>
+      {/* Attention band — what's waiting on you, above everything else. */}
+      {(unread > 0 || draft) && (
+        <div className="mt-8 flex flex-col gap-3">
+          {/* #1 Unread — the loudest thing on the page. */}
+          {unread > 0 && firstUnreadId && (
+            <Link
+              href={`/letter/${firstUnreadId}`}
+              className="flex items-center gap-4 rounded-2xl bg-[#bc6c47] p-4 text-[#faf7f2] transition-colors hover:bg-[#a1542f]"
+            >
+              <span className="min-w-0 flex-1">
+                <span className="block font-medium">
+                  {unread} unread {unread === 1 ? "letter" : "letters"} from {firstName}
+                </span>
+                {unreadWords > 0 && (
+                  <span className="block text-sm text-[#faf7f2]/80">
+                    about {Math.max(1, Math.round(unreadWords / 200))} min of reading, still sealed
+                  </span>
+                )}
+              </span>
+              <span className="shrink-0 rounded-full bg-[#faf7f2] px-4 py-1.5 text-sm font-medium text-[#2b2621]">
+                Read now
+              </span>
+            </Link>
+          )}
+
+          {/* #2 Draft — the letter you started but haven't sent. */}
+          {draft && (
+            <Link
+              href={`/compose/${draft.id}`}
+              className="flex items-center gap-4 rounded-2xl border border-[#e7e0d6] bg-white/60 p-4 transition-colors hover:border-[#d8ccba] hover:bg-white/90"
+            >
+              <span
+                className="h-9 w-9 shrink-0 rounded-full border border-dashed border-[#d3c9b8]"
+                aria-hidden
+              />
+              <span className="min-w-0 flex-1">
+                <span className="block text-[11px] uppercase tracking-wider text-[#a89f95]">
+                  Unfinished letter
+                </span>
+                <span className="block truncate text-sm italic text-[#6f665c]">
+                  {draft.excerpt?.trim() || "Empty letter"}
+                </span>
+              </span>
+              <span className="shrink-0 text-xs text-[#a89f95]">
+                {formatDate(draft.updatedAt)}
+              </span>
+            </Link>
+          )}
+        </div>
       )}
 
       {hasLetters ? (
-        <div className="mt-10 flex flex-col gap-12">
-          {/* Timeline — the heartbeat of the exchange */}
-          <section>
-            <h2 className="mb-4 text-[11px] font-medium uppercase tracking-[0.12em] text-[#a89f95]">
-              Letters per month
-            </h2>
-            <div className="flex h-28 items-end gap-2">
-              {timeline.map((m, i) => (
-                <div key={i} className="flex flex-1 flex-col items-center gap-1.5">
-                  <div className="flex h-full w-full flex-col justify-end">
-                    {m.them > 0 && (
-                      <div
-                        className="w-full rounded-t-sm"
-                        style={{ height: `${(m.them / maxMonth) * 100}%`, background: INK_THEM }}
-                      />
-                    )}
-                    {m.you > 0 && (
-                      <div
-                        className="w-full"
-                        style={{ height: `${(m.you / maxMonth) * 100}%`, background: INK_YOU }}
-                      />
-                    )}
-                  </div>
-                  <span className="text-[10px] text-[#a89f95]">{m.label}</span>
-                </div>
-              ))}
-            </div>
-            <div className="mt-3 flex items-center gap-4 text-xs text-[#8a8178]">
-              <span className="flex items-center gap-1.5">
-                <span className="h-2.5 w-2.5 rounded-sm" style={{ background: INK_THEM }} />
-                {firstName}
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="h-2.5 w-2.5 rounded-sm" style={{ background: INK_YOU }} />
-                You
-              </span>
-            </div>
-          </section>
+        <div className="mt-8">
+          {/* Tabs — the record vs. the numbers. */}
+          <div className="flex gap-6 border-b border-[#e7e0d6]">
+            <TabButton
+              active={tab === "letters"}
+              onClick={() => setTab("letters")}
+              label="Letters"
+              badge={unread}
+            />
+            <TabButton
+              active={tab === "stats"}
+              onClick={() => setTab("stats")}
+              label="Stats"
+            />
+          </div>
 
-          {/* The headline tally */}
-          <section className="grid grid-cols-3 gap-4">
-            <Stat value={totals.total} label="Letters exchanged" />
-            <Stat value={`${readingMinutes} min`} label="Time spent reading" />
-            <Stat value={`${months} mo`} label="Corresponding" />
-          </section>
-
-          {/* Balance — who's carried the conversation */}
-          <section>
-            <div className="mb-2 flex items-center justify-between text-sm text-[#6f665c]">
-              <span>You wrote {totals.sent}</span>
-              <span>
-                {firstName} wrote {totals.received}
-              </span>
-            </div>
-            <div className="flex h-2 overflow-hidden rounded-full bg-[#efe9df]">
-              <div style={{ width: `${(totals.sent / total) * 100}%`, background: INK_YOU }} />
-              <div style={{ width: `${(totals.received / total) * 100}%`, background: INK_THEM }} />
-            </div>
-            {readingMinutes > 0 && (
-              <p className="mt-2 text-xs text-[#a89f95]">
-                {data.wordsRead.toLocaleString()} words read — about{" "}
-                {Math.max(1, Math.round(data.wordsRead / 250))} pages.
+          {tab === "letters" ? (
+            <section className="mt-6">
+              <div className="divide-y divide-[#efe9df]">
+                {history.map((l) => {
+                  const incoming = l.dir === "in";
+                  const isUnread = incoming && !l.openedAt;
+                  const label = incoming ? `${firstName} wrote` : "You wrote";
+                  const trailing =
+                    incoming && l.words && l.words > 0
+                      ? `${l.words.toLocaleString()} words`
+                      : incoming
+                        ? "Sealed"
+                        : "Sent";
+                  const row = (
+                    <div className="flex items-center gap-3 py-3">
+                      <span
+                        className="h-2 w-2 shrink-0 rounded-full"
+                        style={
+                          isUnread
+                            ? { background: INK_THEM }
+                            : incoming
+                              ? { background: "#d8c7bd" }
+                              : { background: "transparent", border: "1px solid #c1b8ac" }
+                        }
+                        aria-hidden
+                      />
+                      <span
+                        className={`min-w-0 flex-1 truncate text-sm ${
+                          isUnread
+                            ? "font-medium text-[#2b2621]"
+                            : incoming
+                              ? "text-[#2b2621]"
+                              : "text-[#6f665c]"
+                        }`}
+                      >
+                        {label}
+                      </span>
+                      {isUnread && (
+                        <span className="shrink-0 rounded-full bg-[#f2e2d5] px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-[#a1542f]">
+                          Unread
+                        </span>
+                      )}
+                      <span className="shrink-0 text-xs text-[#a89f95]">{trailing}</span>
+                      <span className="w-11 shrink-0 text-right text-xs tabular-nums text-[#c1b8ac]">
+                        {formatDate(l.sealedAt)}
+                      </span>
+                    </div>
+                  );
+                  return incoming ? (
+                    <Link key={l.id} href={`/letter/${l.id}`} className="block transition-colors hover:bg-[#f4efe6]/60">
+                      {row}
+                    </Link>
+                  ) : (
+                    <div key={l.id}>{row}</div>
+                  );
+                })}
+              </div>
+            </section>
+          ) : (
+            <div className="mt-8 flex flex-col gap-8">
+              {/* The story so far — a written summary */}
+              <p className="font-serif text-lg leading-relaxed text-[#3a332c]">
+                Since {formatMonthYear(data.since)}, you and {firstName} have traded{" "}
+                <span className="text-[#bc6c47]">{totals.total} letters</span>. {writerClause}
+                {replyStr ? ` You usually reply within ${replyStr}.` : ""} It&apos;s been{" "}
+                <span className="text-[#bc6c47]">{formatSince(rhythm.daysSinceLast)}</span> since{" "}
+                {firstName}&apos;s last.
               </p>
-            )}
-          </section>
 
-          {/* The full record */}
-          <section>
-            <h2 className="mb-2 border-b border-[#e7e0d6] pb-2 text-[11px] font-medium uppercase tracking-[0.12em] text-[#a89f95]">
-              Every letter
-            </h2>
-            <div className="divide-y divide-[#efe9df]">
-              {history.map((l) => {
-                const incoming = l.dir === "in";
-                const label = incoming
-                  ? l.openedAt
-                    ? `${firstName} wrote`
-                    : "Sealed letter"
-                  : "You wrote";
-                const trailing =
-                  incoming && l.words && l.words > 0
-                    ? `${l.words.toLocaleString()} words`
-                    : incoming
-                      ? "Sealed"
-                      : "Sent";
-                const row = (
-                  <div className="flex items-center gap-3 py-3">
-                    <span
-                      className="h-2 w-2 shrink-0 rounded-full"
-                      style={
-                        incoming
-                          ? { background: INK_THEM }
-                          : { background: "transparent", border: "1px solid #c1b8ac" }
-                      }
-                      aria-hidden
-                    />
-                    <span
-                      className={`min-w-0 flex-1 truncate text-sm ${
-                        incoming ? "text-[#2b2621]" : "text-[#6f665c]"
-                      }`}
-                    >
-                      {label}
-                    </span>
-                    <span className="shrink-0 text-xs text-[#a89f95]">{trailing}</span>
-                    <span className="w-11 shrink-0 text-right text-xs tabular-nums text-[#c1b8ac]">
-                      {formatDate(l.sealedAt)}
-                    </span>
+              {/* The ledger — quiet label/value pairs */}
+              <dl className="divide-y divide-[#efe9df] border-t border-[#efe9df]">
+                {ledger.map(([label, value]) => (
+                  <div key={label} className="flex items-baseline justify-between gap-4 py-3">
+                    <dt className="text-sm text-[#a89f95]">{label}</dt>
+                    <dd className="text-right text-sm text-[#2b2621]">{value}</dd>
                   </div>
-                );
-                return incoming ? (
-                  <Link key={l.id} href={`/letter/${l.id}`} className="block transition-colors hover:bg-[#f4efe6]/60">
-                    {row}
-                  </Link>
-                ) : (
-                  <div key={l.id}>{row}</div>
-                );
-              })}
+                ))}
+              </dl>
             </div>
-          </section>
+          )}
         </div>
       ) : (
         !draft && (
@@ -295,11 +374,37 @@ export function Connection({ id }: { id: string }) {
   );
 }
 
-function Stat({ value, label }: { value: string | number; label: string }) {
+function TabButton({
+  active,
+  onClick,
+  label,
+  badge,
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+  badge?: number;
+}) {
   return (
-    <div>
-      <div className="font-serif text-2xl text-[#2b2621]">{value}</div>
-      <div className="mt-0.5 text-xs text-[#a89f95]">{label}</div>
-    </div>
+    <button
+      type="button"
+      onClick={onClick}
+      className={`-mb-px flex items-center gap-2 border-b-2 pb-2.5 pt-1 text-sm transition-colors ${
+        active
+          ? "border-[#bc6c47] font-medium text-[#2b2621]"
+          : "border-transparent text-[#a89f95] hover:text-[#6f665c]"
+      }`}
+    >
+      {label}
+      {badge != null && badge > 0 && (
+        <span
+          className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold leading-none ${
+            active ? "bg-[#bc6c47] text-[#faf7f2]" : "bg-[#efe4d8] text-[#a1542f]"
+          }`}
+        >
+          {badge}
+        </span>
+      )}
+    </button>
   );
 }

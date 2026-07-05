@@ -81,6 +81,7 @@ export function LetterReader({ letterId }: { letterId: string }) {
   if (effectivePhase === "open") {
     return (
       <RevealedLetter
+        letterId={letterId}
         content={(data.content as JSONContent | null) ?? null}
         theme={theme}
         sender={sender}
@@ -146,14 +147,19 @@ const REVEAL_PROSE =
   "letter-prose min-h-[16rem] outline-none [&_p]:my-3 [&_h2]:mt-6 [&_h2]:mb-2 [&_h2]:text-2xl [&_blockquote]:border-l-2 [&_blockquote]:border-current [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:opacity-80 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6";
 
 function RevealedLetter({
+  letterId,
   content,
   theme,
   sender,
 }: {
+  letterId: string;
   content: JSONContent | null;
   theme: { paper: string; ink: string; font: string };
   sender: string;
 }) {
+  const nextUnread = trpc.letters.nextUnread.useQuery({ id: letterId });
+  const nextId = nextUnread.data?.id ?? null;
+  const senderFirst = sender.split(/\s+/)[0] || sender;
   const editor = useEditor({
     immediatelyRender: false,
     editable: false,
@@ -205,7 +211,15 @@ function RevealedLetter({
       >
         <EditorContent editor={editor} />
       </article>
-      <div className="mt-8 text-center">
+      <div className="mt-8 flex flex-col items-center gap-4 text-center">
+        {nextId && (
+          <Link
+            href={`/letter/${nextId}`}
+            className="inline-flex h-11 items-center justify-center rounded-full bg-stone-900 px-6 text-sm font-medium text-stone-50 transition-colors hover:bg-stone-700"
+          >
+            Next unread from {senderFirst} →
+          </Link>
+        )}
         <Link
           href="/mailbox"
           className="text-sm text-stone-500 underline underline-offset-4 hover:text-stone-900"

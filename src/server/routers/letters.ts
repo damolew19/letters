@@ -1,4 +1,4 @@
-import { and, desc, eq, isNotNull, isNull } from "drizzle-orm";
+import { and, asc, desc, eq, isNotNull, isNull, ne } from "drizzle-orm";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { db } from "@/server/db";
@@ -185,6 +185,40 @@ export const lettersRouter = createTRPCRouter({
           ),
         );
       return { ok: true as const };
+    }),
+
+  // The next unread letter from the same sender, oldest first — powers the
+  // "Next unread from …" link in the reader so a run of letters can be opened
+  // one ceremony after another. Returns null when the pile is cleared.
+  nextUnread: protectedProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      const [current] = await db
+        .select({ senderId: letters.senderId, recipientId: letters.recipientId })
+        .from(letters)
+        .where(eq(letters.id, input.id))
+        .limit(1);
+
+      if (!current || current.recipientId !== ctx.user.id) {
+        return { id: null as string | null };
+      }
+
+      const [next] = await db
+        .select({ id: letters.id })
+        .from(letters)
+        .where(
+          and(
+            eq(letters.senderId, current.senderId),
+            eq(letters.recipientId, ctx.user.id),
+            isNotNull(letters.sealedAt),
+            isNull(letters.openedAt),
+            ne(letters.id, input.id),
+          ),
+        )
+        .orderBy(asc(letters.sealedAt))
+        .limit(1);
+
+      return { id: next?.id ?? null };
     }),
 
   // Metadata only: the sender cannot read a letter's content/excerpt once

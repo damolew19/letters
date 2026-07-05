@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { AnimatePresence } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import type { JSONContent } from "@tiptap/react";
 import { useDebouncedCallback } from "use-debounce";
 import { trpc } from "@/client/lib/trpc";
@@ -23,6 +23,10 @@ import {
 } from "@/client/lib/theme";
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
+
+// Excalidraw-style toolbar accent.
+const ACCENT = "#6965db";
+const ACCENT_SELECTED_BG = "#e0dfff";
 
 export function Composer({ draftId }: { draftId: string }) {
   const router = useRouter();
@@ -168,11 +172,10 @@ export function Composer({ draftId }: { draftId: string }) {
     scheduleSave();
   }
 
-  function handleRecipientChange(value: string) {
-    const next = value || null;
-    setRecipientId(next);
+  function handleRecipientChange(id: string | null) {
+    setRecipientId(id);
     setStatus("saving");
-    runSave({ recipientId: next });
+    runSave({ recipientId: id });
   }
 
   if (draftQuery.isLoading) {
@@ -204,112 +207,63 @@ export function Composer({ draftId }: { draftId: string }) {
   const canSend = !!recipientId && hasContent;
 
   return (
-    <div className="flex flex-col gap-6">
+    <div>
+      {/* Floating toolbar islands pinned to the viewport, Excalidraw-style. */}
+      <div className="pointer-events-none fixed inset-x-4 top-4 z-30 flex items-start justify-between gap-3">
+        <StationeryToolbar
+          paper={paper}
+          ink={ink}
+          font={font}
+          onChange={handleThemeChange}
+        />
+
+        <div className="relative">
+          <Island>
+            <span className="px-2 text-xs text-stone-400">
+              {statusLabel(status)}
+            </span>
+            <button
+              type="button"
+              onClick={() => setConfirmOpen(true)}
+              disabled={!canSend || sending}
+              className="h-[30px] rounded-lg px-4 text-sm font-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
+              style={{ backgroundColor: ACCENT }}
+            >
+              {sending ? "Sealing…" : "Seal & send"}
+            </button>
+          </Island>
+          {sendMutation.error && !sending && (
+            <p className="absolute right-0 top-full mt-2 whitespace-nowrap text-xs text-red-600">
+              {sendMutation.error.message}
+            </p>
+          )}
+        </div>
+      </div>
+
       {/* Stationery sheet */}
       <div
-        className="order-2 rounded-2xl border border-stone-200 shadow-sm"
+        className="rounded-2xl border border-stone-200 shadow-sm"
         style={{
           backgroundColor: paperBg(paper),
           color: inkColor(ink),
           fontFamily: fontFamily(font),
         }}
       >
-        <div className="px-8 py-6">
+        <div className="px-8 pt-8">
+          <Salutation
+            friends={friends}
+            recipientId={recipientId}
+            ink={inkColor(ink)}
+            onSelect={handleRecipientChange}
+          />
+        </div>
+        <div className="px-8 pb-6 pt-2">
           <LetterEditor
             initialContent={initialContent}
             onUpdate={handleEditorUpdate}
           />
         </div>
       </div>
-
-      {/* Side panel */}
-      <aside className="order-1 flex flex-col gap-5">
-        <div className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
-          <label className="block text-xs font-medium uppercase tracking-wide text-stone-500">
-            To
-          </label>
-          <select
-            value={recipientId ?? ""}
-            onChange={(e) => handleRecipientChange(e.target.value)}
-            className="mt-2 h-10 w-full rounded-lg border border-stone-300 bg-white px-2 text-sm text-stone-900 outline-none focus:border-stone-900"
-          >
-            <option value="">Choose a correspondent…</option>
-            {friends.map((f) => (
-              <option key={f.id} value={f.id}>
-                {f.name || f.email}
-              </option>
-            ))}
-          </select>
-          {friends.length === 0 && (
-            <p className="mt-2 text-xs text-stone-400">
-              No correspondents yet. Invite someone from your mailbox.
-            </p>
-          )}
-        </div>
-
-        <div className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
-          <Swatches
-            label="Paper"
-            options={Object.entries(PAPERS).map(([key, v]) => ({
-              key,
-              label: v.label,
-              color: v.bg,
-            }))}
-            selected={paper}
-            onSelect={(k) => handleThemeChange({ paper: k as PaperKey })}
-          />
-          <Swatches
-            label="Ink"
-            options={Object.entries(INKS).map(([key, v]) => ({
-              key,
-              label: v.label,
-              color: v.color,
-            }))}
-            selected={ink}
-            onSelect={(k) => handleThemeChange({ ink: k as InkKey })}
-          />
-          <div className="mt-4">
-            <span className="block text-xs font-medium uppercase tracking-wide text-stone-500">
-              Font
-            </span>
-            <div className="mt-2 grid grid-cols-2 gap-2">
-              {Object.entries(FONTS).map(([key, v]) => (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => handleThemeChange({ font: key as FontKey })}
-                  style={{ fontFamily: v.family }}
-                  className={`h-9 rounded-lg border px-2 text-sm transition-colors ${
-                    font === key
-                      ? "border-stone-900 bg-stone-900 text-stone-50"
-                      : "border-stone-300 text-stone-700 hover:border-stone-500"
-                  }`}
-                >
-                  {v.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
-          <div className="flex items-center justify-between text-xs text-stone-400">
-            <span>{statusLabel(status)}</span>
-          </div>
-          <Button
-            onClick={() => setConfirmOpen(true)}
-            disabled={!canSend || sending}
-            className="mt-3 h-11 w-full"
-          >
-            {sending ? "Sealing…" : "Seal & send"}
-          </Button>
-          {sendMutation.error && !sending && (
-            <p className="mt-2 text-xs text-red-600">
-              {sendMutation.error.message}
-            </p>
-          )}
-        </div>
-      </aside>
 
       {confirmOpen && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-stone-900/40 p-6">
@@ -357,38 +311,305 @@ function statusLabel(status: SaveStatus) {
   }
 }
 
-function Swatches({
+function Island({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="pointer-events-auto flex items-center gap-0.5 rounded-xl border border-stone-200 bg-white p-1.5 shadow-[0_3px_8px_rgba(15,15,15,0.12),0_1px_2px_rgba(15,15,15,0.08)]">
+      {children}
+    </div>
+  );
+}
+
+function StationeryToolbar({
+  paper,
+  ink,
+  font,
+  onChange,
+}: {
+  paper: PaperKey;
+  ink: InkKey;
+  font: FontKey;
+  onChange: (next: { paper?: PaperKey; ink?: InkKey; font?: FontKey }) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (rootRef.current && !rootRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [open]);
+
+  return (
+    <div ref={rootRef} className="relative">
+      {/* Collapsed trigger: previews of the current paper, ink, and font. */}
+      <div className="pointer-events-auto inline-flex items-center gap-2 rounded-xl border border-stone-200 bg-white p-1.5 shadow-[0_3px_8px_rgba(15,15,15,0.12),0_1px_2px_rgba(15,15,15,0.08)]">
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          title="Stationery"
+          className={`flex h-[30px] items-center gap-2 rounded-lg px-2 transition-colors ${
+            open ? "" : "hover:bg-stone-100"
+          }`}
+          style={open ? { backgroundColor: ACCENT_SELECTED_BG } : undefined}
+        >
+          <span
+            className="h-[18px] w-[18px] rounded-full border border-black/15"
+            style={{ backgroundColor: paperBg(paper) }}
+          />
+          <span
+            className="h-[18px] w-[18px] rounded-full border border-black/15"
+            style={{ backgroundColor: inkColor(ink) }}
+          />
+          <span
+            className="text-sm text-stone-600"
+            style={{ fontFamily: fontFamily(font) }}
+          >
+            {FONTS[font].label[0]}
+          </span>
+          <svg
+            width={12}
+            height={12}
+            viewBox="0 0 12 12"
+            fill="none"
+            className={`text-stone-400 transition-transform ${
+              open ? "rotate-180" : ""
+            }`}
+            aria-hidden
+          >
+            <path
+              d="M3 4.5L6 7.5L9 4.5"
+              stroke="currentColor"
+              strokeWidth={1.4}
+              strokeLinecap="round"
+            />
+          </svg>
+        </button>
+      </div>
+
+      {/* Fold-down panel with the full controls. */}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: -6, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -6, scale: 0.98 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
+            className="pointer-events-auto absolute left-0 top-full mt-2 origin-top rounded-xl border border-stone-200 bg-white p-3 shadow-[0_3px_8px_rgba(15,15,15,0.12),0_1px_2px_rgba(15,15,15,0.08)]"
+          >
+            <ToolbarSection label="Paper">
+              <SwatchGroup
+                options={Object.entries(PAPERS).map(([key, v]) => ({
+                  key,
+                  label: v.label,
+                  color: v.bg,
+                }))}
+                selected={paper}
+                onSelect={(k) => onChange({ paper: k as PaperKey })}
+              />
+            </ToolbarSection>
+            <ToolbarSection label="Ink">
+              <SwatchGroup
+                options={Object.entries(INKS).map(([key, v]) => ({
+                  key,
+                  label: v.label,
+                  color: v.color,
+                }))}
+                selected={ink}
+                onSelect={(k) => onChange({ ink: k as InkKey })}
+              />
+            </ToolbarSection>
+            <ToolbarSection label="Font">
+              <FontGroup selected={font} onSelect={(k) => onChange({ font: k })} />
+            </ToolbarSection>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function ToolbarSection({
   label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="mt-3 first:mt-0">
+      <span className="mb-1.5 block text-[11px] font-medium uppercase tracking-wide text-stone-400">
+        {label}
+      </span>
+      {children}
+    </div>
+  );
+}
+
+function SwatchGroup({
   options,
   selected,
   onSelect,
 }: {
-  label: string;
   options: { key: string; label: string; color: string }[];
   selected: string;
   onSelect: (key: string) => void;
 }) {
   return (
-    <div className="mt-1 first:mt-0">
-      <span className="block text-xs font-medium uppercase tracking-wide text-stone-500">
-        {label}
-      </span>
-      <div className="mt-2 flex gap-2">
-        {options.map((o) => (
+    <div className="flex items-center gap-0.5">
+      {options.map((o) => {
+        const active = selected === o.key;
+        return (
           <button
             key={o.key}
             type="button"
             title={o.label}
             onClick={() => onSelect(o.key)}
-            style={{ backgroundColor: o.color }}
-            className={`h-7 w-7 rounded-full border-2 transition-transform ${
-              selected === o.key
-                ? "border-stone-900 scale-110"
-                : "border-stone-200 hover:scale-105"
+            className={`flex h-[30px] w-[30px] items-center justify-center rounded-lg transition-colors ${
+              active ? "" : "hover:bg-stone-100"
             }`}
-          />
-        ))}
-      </div>
+            style={active ? { backgroundColor: ACCENT_SELECTED_BG } : undefined}
+          >
+            <span
+              className="h-[18px] w-[18px] rounded-full border border-black/15"
+              style={{
+                backgroundColor: o.color,
+                boxShadow: active ? `0 0 0 1.5px ${ACCENT}` : undefined,
+              }}
+            />
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function FontGroup({
+  selected,
+  onSelect,
+}: {
+  selected: FontKey;
+  onSelect: (key: FontKey) => void;
+}) {
+  return (
+    <div className="flex items-center gap-0.5">
+      {Object.entries(FONTS).map(([key, v]) => {
+        const active = selected === key;
+        return (
+          <button
+            key={key}
+            type="button"
+            title={v.label}
+            onClick={() => onSelect(key as FontKey)}
+            className={`h-[30px] min-w-[30px] rounded-lg px-2 text-sm transition-colors ${
+              active ? "font-bold" : "text-stone-600 hover:bg-stone-100"
+            }`}
+            style={{
+              fontFamily: v.family,
+              ...(active
+                ? { backgroundColor: ACCENT_SELECTED_BG, color: ACCENT }
+                : undefined),
+            }}
+          >
+            {v.label[0]}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function Salutation({
+  friends,
+  recipientId,
+  ink,
+  onSelect,
+}: {
+  friends: { id: string; name: string | null; email: string }[];
+  recipientId: string | null;
+  ink: string;
+  onSelect: (id: string | null) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (rootRef.current && !rootRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [open]);
+
+  const recipient = friends.find((f) => f.id === recipientId);
+  const recipientName = recipient ? recipient.name || recipient.email : null;
+
+  return (
+    <div className="text-[1.375rem] leading-relaxed">
+      Dear{" "}
+      <span ref={rootRef} className="relative">
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          className="inline-flex cursor-pointer items-baseline gap-1.5 border-b-2 border-dashed bg-transparent px-0.5 pb-px"
+          style={{ color: ink, borderColor: `${ink}66` }}
+        >
+          {recipientName ?? "choose a correspondent"}
+          <svg
+            width={12}
+            height={12}
+            viewBox="0 0 12 12"
+            fill="none"
+            className="self-center"
+            aria-hidden
+          >
+            <path
+              d="M3 4.5L6 7.5L9 4.5"
+              stroke="currentColor"
+              strokeWidth={1.4}
+              strokeLinecap="round"
+            />
+          </svg>
+        </button>
+        {open && (
+          <span
+            className="absolute left-0 top-full z-20 mt-2 block min-w-52 rounded-xl border border-stone-200 bg-white p-1 font-sans text-sm shadow-lg"
+            style={{ fontFamily: "var(--font-sans, system-ui, sans-serif)" }}
+          >
+            {friends.length === 0 ? (
+              <span className="block px-3 py-2 text-xs text-stone-400">
+                No correspondents yet. Invite someone from your mailbox.
+              </span>
+            ) : (
+              friends.map((f) => (
+                <button
+                  key={f.id}
+                  type="button"
+                  onClick={() => {
+                    onSelect(f.id);
+                    setOpen(false);
+                  }}
+                  className={`block w-full rounded-lg px-3 py-1.5 text-left transition-colors ${
+                    f.id === recipientId
+                      ? "bg-stone-100 text-stone-900"
+                      : "text-stone-600 hover:bg-stone-50 hover:text-stone-900"
+                  }`}
+                >
+                  {f.name || f.email}
+                </button>
+              ))
+            )}
+          </span>
+        )}
+      </span>
+      ,
     </div>
   );
 }

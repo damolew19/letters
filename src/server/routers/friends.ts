@@ -282,16 +282,50 @@ export const friendsRouter = createTRPCRouter({
       let sent = 0;
       let received = 0;
       let wordsRead = 0;
+      let wordsWritten = 0;
+      let unread = 0;
+      let longestWords = 0;
+      let longestDir: "in" | "out" | null = null;
+      const openLatencyHoursList: number[] = [];
+      const HOUR = 1000 * 60 * 60;
       const history = sealed.map((l) => {
         const dir = l.senderId === me ? ("out" as const) : ("in" as const);
-        const words = dir === "in" ? countWords(l.content) : null;
-        if (dir === "out") sent += 1;
-        else {
-          received += 1;
-          wordsRead += words ?? 0;
+        const words = countWords(l.content);
+        if (words > longestWords) {
+          longestWords = words;
+          longestDir = dir;
         }
-        return { id: l.id, dir, sealedAt: l.sealedAt, openedAt: l.openedAt, words };
+        if (dir === "out") {
+          sent += 1;
+          wordsWritten += words;
+        } else {
+          received += 1;
+          wordsRead += words;
+          if (!l.openedAt) unread += 1;
+          // How long it took you to open their letter, once delivered.
+          if (l.openedAt && l.sealedAt) {
+            openLatencyHoursList.push(
+              (new Date(l.openedAt).getTime() - new Date(l.sealedAt).getTime()) / HOUR,
+            );
+          }
+        }
+        return {
+          id: l.id,
+          dir,
+          sealedAt: l.sealedAt,
+          openedAt: l.openedAt,
+          words: dir === "in" ? words : null,
+        };
       });
+
+      // Oldest unopened letter from them — the target of the "Read now" nudge.
+      // `sealed` is newest-first, so scan from the end for the earliest.
+      const firstUnread = [...sealed]
+        .reverse()
+        .find((l) => l.senderId === them && !l.openedAt);
+      const unreadWords = sealed
+        .filter((l) => l.senderId === them && !l.openedAt)
+        .reduce((sum, l) => sum + countWords(l.content), 0);
 
       // The exchange rhythm across the last 8 months, split by author.
       const now = new Date();
@@ -327,13 +361,57 @@ export const friendsRouter = createTRPCRouter({
         );
       }
 
+      // Reply rhythm — walk the exchange oldest→newest and measure the gaps.
+      // A "reply" is a letter whose author differs from the one before it.
+      const DAY = 1000 * 60 * 60 * 24;
+      const chrono = [...sealed].reverse();
+      const yourReplies: number[] = [];
+      const theirReplies: number[] = [];
+      let longestSilenceDays = 0;
+      for (let i = 1; i < chrono.length; i++) {
+        const prev = chrono[i - 1]!;
+        const cur = chrono[i]!;
+        if (!prev.sealedAt || !cur.sealedAt) continue;
+        const gap =
+          (new Date(cur.sealedAt).getTime() - new Date(prev.sealedAt).getTime()) /
+          DAY;
+        if (gap > longestSilenceDays) longestSilenceDays = gap;
+        if (prev.senderId !== cur.senderId) {
+          if (cur.senderId === me) yourReplies.push(gap);
+          else theirReplies.push(gap);
+        }
+      }
+      const mean = (xs: number[]) =>
+        xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null;
+
+      const allReplies = [...yourReplies, ...theirReplies];
+      const fastestReplyDays = allReplies.length ? Math.min(...allReplies) : null;
+
+      const latestSealed = sealed[0]?.sealedAt ?? null;
+      const daysSinceLast = latestSealed
+        ? Math.floor((now.getTime() - new Date(latestSealed).getTime()) / DAY)
+        : null;
+
       return {
         person,
         totals: { total: sealed.length, sent, received },
+        unread,
+        unreadWords,
+        firstUnreadId: firstUnread?.id ?? null,
         since,
         months,
         wordsRead,
+        wordsWritten,
         readingMinutes: Math.round(wordsRead / WORDS_PER_MINUTE),
+        rhythm: {
+          daysSinceLast,
+          yourReplyDays: mean(yourReplies),
+          theirReplyDays: mean(theirReplies),
+          fastestReplyDays,
+          longestSilenceDays: longestSilenceDays > 0 ? Math.round(longestSilenceDays) : null,
+          openLatencyHours: mean(openLatencyHoursList),
+        },
+        longestLetter: longestDir ? { words: longestWords, dir: longestDir } : null,
         timeline: timeline.map(({ label, you, them }) => ({ label, you, them })),
         draft: draft ?? null,
         history,
