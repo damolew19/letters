@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { Form } from "react-aria-components";
 import { authClient } from "@/client/lib/auth";
 import { Button } from "@/client/components/ui/button";
+import { TextField } from "@/client/components/ui/text-field";
 
 type Status = "idle" | "loading" | "sent" | "error";
 
@@ -51,7 +53,7 @@ export function MagicLinkForm({ callbackURL }: { callbackURL: string }) {
           <span className="text-stone-900">{email}</span>. The link expires in 5
           minutes.
         </p>
-        <Button variant="link" onClick={() => setStatus("idle")} className="mt-4">
+        <Button variant="link" onPress={() => setStatus("idle")} className="mt-4">
           Use a different email
         </Button>
       </div>
@@ -59,29 +61,24 @@ export function MagicLinkForm({ callbackURL }: { callbackURL: string }) {
   }
 
   return (
-    <form
+    <Form
       onSubmit={onSubmit}
       className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm"
     >
-      <label htmlFor="email" className="block text-sm font-medium text-stone-700">
-        Email address
-      </label>
-      <input
-        id="email"
+      <TextField
+        name="email"
         type="email"
-        required
+        isRequired
         autoComplete="email"
         value={email}
-        onChange={(e) => setEmail(e.target.value)}
+        onChange={setEmail}
+        label="Email address"
         placeholder="you@example.com"
-        className="mt-2 h-11 w-full rounded-lg border border-stone-300 bg-white px-3 text-stone-900 outline-none placeholder:text-stone-400 focus:border-stone-900"
+        errorMessage={status === "error" ? error : undefined}
       />
-      {status === "error" && (
-        <p className="mt-2 text-sm text-red-600">{error}</p>
-      )}
       <Button
         type="submit"
-        disabled={status === "loading"}
+        isDisabled={status === "loading"}
         className="mt-4 h-11 w-full"
       >
         {status === "loading" ? "Sending link…" : "Send me a sign-in link"}
@@ -89,6 +86,6 @@ export function MagicLinkForm({ callbackURL }: { callbackURL: string }) {
       <p className="mt-3 text-center text-xs text-stone-400">
         No passwords. We email you a magic link.
       </p>
-    </form>
+    </Form>
   );
 }

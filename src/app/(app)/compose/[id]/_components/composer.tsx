@@ -6,8 +6,11 @@ import Link from "next/link";
 import { AnimatePresence, motion } from "motion/react";
 import type { JSONContent } from "@tiptap/react";
 import { useDebouncedCallback } from "use-debounce";
+import { Heading } from "react-aria-components";
 import { trpc } from "@/client/lib/trpc";
 import { Button } from "@/client/components/ui/button";
+import { Modal } from "@/client/components/ui/modal";
+import { ToggleButton } from "@/client/components/ui/toggle-button";
 import { LetterEditor } from "./letter-editor";
 import { SealAnimation } from "./seal-animation";
 import {
@@ -222,15 +225,15 @@ export function Composer({ draftId }: { draftId: string }) {
             <span className="px-2 text-xs text-stone-400">
               {statusLabel(status)}
             </span>
-            <button
-              type="button"
-              onClick={() => setConfirmOpen(true)}
-              disabled={!canSend || sending}
-              className="h-[30px] rounded-lg px-4 text-sm font-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
+            <Button
+              variant="unstyled"
+              onPress={() => setConfirmOpen(true)}
+              isDisabled={!canSend || sending}
+              className="h-[30px] rounded-lg px-4 text-sm font-semibold text-white outline-none transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
               style={{ backgroundColor: ACCENT }}
             >
               {sending ? "Sealing…" : "Seal & send"}
-            </button>
+            </Button>
           </Island>
           {sendMutation.error && !sending && (
             <p className="absolute right-0 top-full mt-2 whitespace-nowrap text-xs text-red-600">
@@ -265,23 +268,26 @@ export function Composer({ draftId }: { draftId: string }) {
         </div>
       </div>
 
-      {confirmOpen && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-stone-900/40 p-6">
-          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
-            <h2 className="font-serif text-xl text-stone-900">Seal this letter?</h2>
-            <p className="mt-2 text-sm text-stone-500">
-              Once sealed, you can&apos;t edit or read this letter again. It will
-              be on its way to your correspondent.
-            </p>
-            <div className="mt-5 flex justify-end gap-3">
-              <Button variant="ghost" onClick={() => setConfirmOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleConfirmSend}>Seal &amp; send</Button>
-            </div>
-          </div>
+      <Modal
+        variant="center"
+        role="alertdialog"
+        isOpen={confirmOpen}
+        onOpenChange={setConfirmOpen}
+      >
+        <Heading slot="title" className="font-serif text-xl text-stone-900">
+          Seal this letter?
+        </Heading>
+        <p className="mt-2 text-sm text-stone-500">
+          Once sealed, you can&apos;t edit or read this letter again. It will be
+          on its way to your correspondent.
+        </p>
+        <div className="mt-5 flex justify-end gap-3">
+          <Button variant="ghost" onPress={() => setConfirmOpen(false)}>
+            Cancel
+          </Button>
+          <Button onPress={handleConfirmSend}>Seal &amp; send</Button>
         </div>
-      )}
+      </Modal>
 
       <AnimatePresence>
         {sending && (
@@ -348,11 +354,11 @@ function StationeryToolbar({
     <div ref={rootRef} className="relative">
       {/* Collapsed trigger: previews of the current paper, ink, and font. */}
       <div className="pointer-events-auto inline-flex items-center gap-2 rounded-xl border border-stone-200 bg-white p-1.5 shadow-[0_3px_8px_rgba(15,15,15,0.12),0_1px_2px_rgba(15,15,15,0.08)]">
-        <button
-          type="button"
-          onClick={() => setOpen((o) => !o)}
-          title="Stationery"
-          className={`flex h-[30px] items-center gap-2 rounded-lg px-2 transition-colors ${
+        <Button
+          variant="unstyled"
+          onPress={() => setOpen((o) => !o)}
+          aria-label="Stationery"
+          className={`flex h-[30px] items-center gap-2 rounded-lg px-2 outline-none transition-colors ${
             open ? "" : "hover:bg-stone-100"
           }`}
           style={open ? { backgroundColor: ACCENT_SELECTED_BG } : undefined}
@@ -388,7 +394,7 @@ function StationeryToolbar({
               strokeLinecap="round"
             />
           </svg>
-        </button>
+        </Button>
       </div>
 
       {/* Fold-down panel with the full controls. */}
@@ -464,12 +470,12 @@ function SwatchGroup({
       {options.map((o) => {
         const active = selected === o.key;
         return (
-          <button
+          <ToggleButton
             key={o.key}
-            type="button"
-            title={o.label}
-            onClick={() => onSelect(o.key)}
-            className={`flex h-[30px] w-[30px] items-center justify-center rounded-lg transition-colors ${
+            aria-label={o.label}
+            isSelected={active}
+            onPress={() => onSelect(o.key)}
+            className={`flex h-[30px] w-[30px] items-center justify-center rounded-lg outline-none transition-colors ${
               active ? "" : "hover:bg-stone-100"
             }`}
             style={active ? { backgroundColor: ACCENT_SELECTED_BG } : undefined}
@@ -481,7 +487,7 @@ function SwatchGroup({
                 boxShadow: active ? `0 0 0 1.5px ${ACCENT}` : undefined,
               }}
             />
-          </button>
+          </ToggleButton>
         );
       })}
     </div>
@@ -500,12 +506,12 @@ function FontGroup({
       {Object.entries(FONTS).map(([key, v]) => {
         const active = selected === key;
         return (
-          <button
+          <ToggleButton
             key={key}
-            type="button"
-            title={v.label}
-            onClick={() => onSelect(key as FontKey)}
-            className={`h-[30px] min-w-[30px] rounded-lg px-2 text-sm transition-colors ${
+            aria-label={v.label}
+            isSelected={active}
+            onPress={() => onSelect(key as FontKey)}
+            className={`h-[30px] min-w-[30px] rounded-lg px-2 text-sm outline-none transition-colors ${
               active ? "font-bold" : "text-stone-600 hover:bg-stone-100"
             }`}
             style={{
@@ -516,7 +522,7 @@ function FontGroup({
             }}
           >
             {v.label[0]}
-          </button>
+          </ToggleButton>
         );
       })}
     </div>
@@ -555,10 +561,10 @@ function Salutation({
     <div className="text-[1.375rem] leading-relaxed">
       Dear{" "}
       <span ref={rootRef} className="relative">
-        <button
-          type="button"
-          onClick={() => setOpen((o) => !o)}
-          className="inline-flex cursor-pointer items-baseline gap-1.5 border-b-2 border-dashed bg-transparent px-0.5 pb-px"
+        <Button
+          variant="unstyled"
+          onPress={() => setOpen((o) => !o)}
+          className="inline-flex cursor-pointer items-baseline gap-1.5 border-b-2 border-dashed bg-transparent px-0.5 pb-px outline-none"
           style={{ color: ink, borderColor: `${ink}66` }}
         >
           {recipientName ?? "choose a correspondent"}
@@ -577,7 +583,7 @@ function Salutation({
               strokeLinecap="round"
             />
           </svg>
-        </button>
+        </Button>
         {open && (
           <span
             className="absolute left-0 top-full z-20 mt-2 block min-w-52 rounded-xl border border-stone-200 bg-white p-1 font-sans text-sm shadow-lg"
@@ -589,21 +595,21 @@ function Salutation({
               </span>
             ) : (
               friends.map((f) => (
-                <button
+                <Button
+                  variant="unstyled"
                   key={f.id}
-                  type="button"
-                  onClick={() => {
+                  onPress={() => {
                     onSelect(f.id);
                     setOpen(false);
                   }}
-                  className={`block w-full rounded-lg px-3 py-1.5 text-left transition-colors ${
+                  className={`block w-full rounded-lg px-3 py-1.5 text-left outline-none transition-colors ${
                     f.id === recipientId
                       ? "bg-stone-100 text-stone-900"
                       : "text-stone-600 hover:bg-stone-50 hover:text-stone-900"
                   }`}
                 >
                   {f.name || f.email}
-                </button>
+                </Button>
               ))
             )}
           </span>

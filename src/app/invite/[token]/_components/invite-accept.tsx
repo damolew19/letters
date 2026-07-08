@@ -31,8 +31,8 @@ export function InviteAccept({
         <p className="mt-3 text-sm text-red-600">{accept.error.message}</p>
       )}
       <Button
-        onClick={() => accept.mutate({ token })}
-        disabled={accept.isPending || accept.isSuccess}
+        onPress={() => accept.mutate({ token })}
+        isDisabled={accept.isPending || accept.isSuccess}
         className="mt-4 h-11 w-full"
       >
         {accept.isPending || accept.isSuccess

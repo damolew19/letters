@@ -4,6 +4,8 @@ import { useEditor, EditorContent, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { Placeholder } from "@tiptap/extension-placeholder";
 import type { JSONContent } from "@tiptap/react";
+import { Separator, Toolbar as AriaToolbar } from "react-aria-components";
+import { ToggleButton } from "@/client/components/ui/toggle-button";
 
 type LetterEditorProps = {
   initialContent?: JSONContent | null;
@@ -20,10 +22,9 @@ function ToolbarButton({
   label: string;
 }) {
   return (
-    <button
-      type="button"
-      onMouseDown={(e) => e.preventDefault()}
-      onClick={onClick}
+    <ToggleButton
+      isSelected={active}
+      onPress={onClick}
       className={`h-8 min-w-8 rounded-md px-2 text-sm transition-colors ${
         active
           ? "bg-stone-900 text-stone-50"
@@ -31,13 +32,16 @@ function ToolbarButton({
       }`}
     >
       {label}
-    </button>
+    </ToggleButton>
   );
 }
 
 function Toolbar({ editor }: { editor: Editor }) {
   return (
-    <div className="flex flex-wrap items-center gap-1 border-b border-stone-200/70 px-2 py-1.5">
+    <AriaToolbar
+      aria-label="Text formatting"
+      className="flex flex-wrap items-center gap-1 border-b border-stone-200/70 px-2 py-1.5"
+    >
       <ToolbarButton
         active={editor.isActive("bold")}
         onClick={() => editor.chain().focus().toggleBold().run()}
@@ -48,7 +52,10 @@ function Toolbar({ editor }: { editor: Editor }) {
         onClick={() => editor.chain().focus().toggleItalic().run()}
         label="I"
       />
-      <span className="mx-1 h-5 w-px bg-stone-200" />
+      <Separator
+        orientation="vertical"
+        className="mx-1 h-5 w-px bg-stone-200"
+      />
       <ToolbarButton
         active={editor.isActive("heading", { level: 2 })}
         onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
@@ -69,7 +76,7 @@ function Toolbar({ editor }: { editor: Editor }) {
         onClick={() => editor.chain().focus().toggleBlockquote().run()}
         label="❝"
       />
-    </div>
+    </AriaToolbar>
   );
 }
 

@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Button } from "@/client/components/ui/button";
+import { Tab, TabList, TabPanel, Tabs } from "@/client/components/ui/tabs";
 import { trpc } from "@/client/lib/trpc";
 
 function formatDate(value: string | Date | null | undefined) {
@@ -201,14 +203,14 @@ export function Connection({ id }: { id: string }) {
           </div>
         </div>
         {!draft && (
-          <button
-            type="button"
-            onClick={writeTo}
-            disabled={busy}
-            className="shrink-0 rounded-full bg-[#bc6c47] px-4 py-2 text-sm font-medium text-[#faf7f2] transition-colors hover:bg-[#a1542f] disabled:opacity-60"
+          <Button
+            variant="accent"
+            onPress={writeTo}
+            isDisabled={busy}
+            className="shrink-0"
           >
             {busy ? "Opening…" : `Write to ${firstName}`}
-          </button>
+          </Button>
         )}
       </div>
 
@@ -266,24 +268,24 @@ export function Connection({ id }: { id: string }) {
       )}
 
       {hasLetters ? (
-        <div className="mt-8">
+        <Tabs
+          selectedKey={tab}
+          onSelectionChange={(key) => setTab(key as "letters" | "stats")}
+          className="mt-8"
+        >
           {/* Tabs — the record vs. the numbers. */}
-          <div className="flex gap-6 border-b border-[#e7e0d6]">
-            <TabButton
-              active={tab === "letters"}
-              onClick={() => setTab("letters")}
-              label="Letters"
-              badge={unread}
-            />
-            <TabButton
-              active={tab === "stats"}
-              onClick={() => setTab("stats")}
-              label="Stats"
-            />
-          </div>
+          <TabList
+            aria-label="Correspondence"
+            className="flex gap-6 border-b border-[#e7e0d6]"
+          >
+            <Tab id="letters" badge={unread}>
+              Letters
+            </Tab>
+            <Tab id="stats">Stats</Tab>
+          </TabList>
 
-          {tab === "letters" ? (
-            <section className="mt-6">
+          <TabPanel id="letters" className="mt-6">
+            <section>
               <div className="divide-y divide-[#efe9df]">
                 {history.map((l) => {
                   const incoming = l.dir === "in";
@@ -340,8 +342,9 @@ export function Connection({ id }: { id: string }) {
                 })}
               </div>
             </section>
-          ) : (
-            <div className="mt-8 flex flex-col gap-8">
+          </TabPanel>
+
+          <TabPanel id="stats" className="mt-8 flex flex-col gap-8">
               {/* The story so far — a written summary */}
               <p className="font-serif text-lg leading-relaxed text-[#3a332c]">
                 Since {formatMonthYear(data.since)}, you and {firstName} have traded{" "}
@@ -360,9 +363,8 @@ export function Connection({ id }: { id: string }) {
                   </div>
                 ))}
               </dl>
-            </div>
-          )}
-        </div>
+          </TabPanel>
+        </Tabs>
       ) : (
         !draft && (
           <p className="mt-8 text-sm italic text-[#a89f95]">
@@ -374,37 +376,3 @@ export function Connection({ id }: { id: string }) {
   );
 }
 
-function TabButton({
-  active,
-  onClick,
-  label,
-  badge,
-}: {
-  active: boolean;
-  onClick: () => void;
-  label: string;
-  badge?: number;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`-mb-px flex items-center gap-2 border-b-2 pb-2.5 pt-1 text-sm transition-colors ${
-        active
-          ? "border-[#bc6c47] font-medium text-[#2b2621]"
-          : "border-transparent text-[#a89f95] hover:text-[#6f665c]"
-      }`}
-    >
-      {label}
-      {badge != null && badge > 0 && (
-        <span
-          className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold leading-none ${
-            active ? "bg-[#bc6c47] text-[#faf7f2]" : "bg-[#efe4d8] text-[#a1542f]"
-          }`}
-        >
-          {badge}
-        </span>
-      )}
-    </button>
-  );
-}

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { AnimatePresence } from "motion/react";
 import { useEditor, EditorContent, type JSONContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
+import { Button } from "@/client/components/ui/button";
 import { trpc } from "@/client/lib/trpc";
 import { EnvelopeOpen } from "./envelope-open";
 import { paperBg, inkColor, fontFamily } from "@/client/lib/theme";
@@ -98,13 +99,14 @@ export function LetterReader({ letterId }: { letterId: string }) {
       <p className="mt-2 text-sm text-stone-500">
         Take your time. Once you open it, it&apos;s yours to keep.
       </p>
-      <button
-        onClick={handleOpen}
-        disabled={phase === "opening"}
+      <Button
+        variant="unstyled"
+        onPress={handleOpen}
+        isDisabled={phase === "opening"}
         className="mt-8 inline-flex h-11 items-center justify-center rounded-full bg-stone-900 px-6 text-sm font-medium text-stone-50 transition-colors hover:bg-stone-700 disabled:opacity-60"
       >
         Open letter
-      </button>
+      </Button>
 
       <AnimatePresence>
         {phase === "opening" && (
