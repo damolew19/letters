@@ -9,7 +9,7 @@ import { prefersReducedMotion } from "@/client/lib/motion";
 import { paperBg, inkColor, fontFamily, type LetterTheme } from "@/client/lib/theme";
 
 const REVEAL_PROSE =
-  "letter-prose min-h-[16rem] outline-none [&_p]:my-3 [&_h2]:mt-6 [&_h2]:mb-2 [&_h2]:text-2xl [&_blockquote]:border-l-2 [&_blockquote]:border-current [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:opacity-80 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6";
+  "letter-prose min-h-[16rem] outline-none [&_p]:my-2 [&_h2]:mt-6 [&_h2]:mb-2 [&_h2]:text-2xl [&_blockquote]:border-l-2 [&_blockquote]:border-current [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:opacity-80 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6";
 
 type RevealedLetterProps = {
   letterId: string;
