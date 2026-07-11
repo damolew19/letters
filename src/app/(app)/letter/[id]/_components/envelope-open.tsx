@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "motion/react";
-import { paperBg } from "@/client/lib/theme";
+import { paperBg, type LetterTheme } from "@/client/lib/theme";
 
 type Stage = "crack" | "open" | "rise";
 
 type EnvelopeOpenProps = {
-  theme: { paper: string; ink: string; font: string };
+  theme: LetterTheme;
   onComplete: () => void;
 };
 

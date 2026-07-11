@@ -6,19 +6,7 @@ import { invites, user } from "@/server/db/schema";
 import { auth } from "@/server/auth";
 import { MagicLinkForm } from "@/client/components/magic-link-form";
 import { InviteAccept } from "./_components/invite-accept";
-
-function Shell({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="flex min-h-dvh flex-col items-center justify-center bg-stone-50 px-6 text-stone-900">
-      <main className="w-full max-w-md">
-        <div className="mb-10 text-center">
-          <h1 className="font-serif text-4xl tracking-tight">Letters</h1>
-        </div>
-        {children}
-      </main>
-    </div>
-  );
-}
+import { InviteShell } from "./_components/invite-shell";
 
 export default async function InvitePage({
   params,
@@ -36,14 +24,14 @@ export default async function InvitePage({
 
   if (!invite) {
     return (
-      <Shell>
+      <InviteShell>
         <div className="rounded-2xl border border-stone-200 bg-white p-6 text-center shadow-sm">
           <p className="font-medium">This invite link is no longer valid.</p>
           <p className="mt-2 text-sm text-stone-500">
             It may have been revoked. Ask your friend for a fresh link.
           </p>
         </div>
-      </Shell>
+      </InviteShell>
     );
   }
 
@@ -52,19 +40,19 @@ export default async function InvitePage({
 
   if (!session) {
     return (
-      <Shell>
+      <InviteShell>
         <p className="mb-6 text-center text-stone-600">
           <span className="font-medium text-stone-900">{inviterName}</span>{" "}
           invited you to exchange letters. Sign in to accept.
         </p>
         <MagicLinkForm callbackURL={`/invite/${token}`} />
-      </Shell>
+      </InviteShell>
     );
   }
 
   if (session.user.id === invite.inviterId) {
     return (
-      <Shell>
+      <InviteShell>
         <div className="rounded-2xl border border-stone-200 bg-white p-6 text-center shadow-sm">
           <p className="text-stone-600">This is your own invite link.</p>
           <Link
@@ -74,13 +62,13 @@ export default async function InvitePage({
             Go to your mailbox
           </Link>
         </div>
-      </Shell>
+      </InviteShell>
     );
   }
 
   return (
-    <Shell>
+    <InviteShell>
       <InviteAccept token={token} inviterName={invite.inviterName} />
-    </Shell>
+    </InviteShell>
   );
 }

@@ -5,6 +5,9 @@ export type PaperKey = "cream" | "white" | "blush" | "sky" | "sage";
 export type InkKey = "sepia" | "black" | "navy" | "plum" | "forest";
 export type FontKey = "serif" | "sans" | "mono" | "hand";
 
+// The stationery a letter was written on, stored as plain string keys.
+export type LetterTheme = { paper: string; ink: string; font: string };
+
 export const PAPERS: Record<PaperKey, { label: string; bg: string }> = {
   cream: { label: "Cream", bg: "#f7f1e3" },
   white: { label: "White", bg: "#fdfdfc" },

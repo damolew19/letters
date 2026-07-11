@@ -1,7 +1,4 @@
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
-import { auth } from "@/server/auth";
-import { AppHeader } from "@/client/components/app-header";
+import { requireSession } from "@/server/dal";
 import { Connection } from "./_components/connection";
 
 export default async function ConnectionPage({
@@ -9,20 +6,12 @@ export default async function ConnectionPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const session = await auth.api.getSession({ headers: await headers() });
-
-  if (!session) {
-    redirect("/");
-  }
-
+  await requireSession();
   const { id } = await params;
 
   return (
-    <>
-      <AppHeader name={session.user.name} email={session.user.email} />
-      <div className="mt-8">
-        <Connection id={id} />
-      </div>
-    </>
+    <div className="mt-8">
+      <Connection id={id} />
+    </div>
   );
 }
