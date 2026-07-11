@@ -177,29 +177,31 @@ export function Connection({ id }: { id: string }) {
       </Link>
 
       {/* Header: the relationship, front and center */}
-      <div className="mt-4 flex items-center gap-4">
-        <span
-          className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-lg font-medium"
-          style={{ background: tint.bg, color: tint.fg }}
-          aria-hidden
-        >
-          {initials(who)}
-        </span>
-        <div className="min-w-0 flex-1">
-          <h1 className="truncate font-serif text-3xl tracking-tight text-[#2b2621]">
-            {who}
-          </h1>
-          <div className="mt-1 flex flex-wrap items-center gap-2">
-            <span className="text-sm italic text-[#8a8178]">
-              {hasLetters
-                ? `Corresponding since ${formatDate(data.since)} · ${totals.total} letters`
-                : "No letters yet"}
-            </span>
-            {!draft && (
-              <span className="rounded-full border border-[#e7e0d6] px-2 py-0.5 text-[11px] uppercase tracking-wider text-[#8a8178]">
-                {TURN_LABEL[turn]}
+      <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center">
+        <div className="flex min-w-0 flex-1 items-center gap-4">
+          <span
+            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-lg font-medium"
+            style={{ background: tint.bg, color: tint.fg }}
+            aria-hidden
+          >
+            {initials(who)}
+          </span>
+          <div className="min-w-0 flex-1">
+            <h1 className="truncate font-serif text-3xl tracking-tight text-[#2b2621]">
+              {who}
+            </h1>
+            <div className="mt-1 flex flex-wrap items-center gap-2">
+              <span className="text-sm italic text-[#8a8178]">
+                {hasLetters
+                  ? `Corresponding since ${formatDate(data.since)} · ${totals.total} letters`
+                  : "No letters yet"}
               </span>
-            )}
+              {!draft && (
+                <span className="rounded-full border border-[#e7e0d6] px-2 py-0.5 text-[11px] uppercase tracking-wider text-[#8a8178]">
+                  {TURN_LABEL[turn]}
+                </span>
+              )}
+            </div>
           </div>
         </div>
         {!draft && (
@@ -207,9 +209,11 @@ export function Connection({ id }: { id: string }) {
             variant="accent"
             onPress={writeTo}
             isDisabled={busy}
-            className="shrink-0"
+            className="w-full shrink-0 sm:w-auto sm:max-w-[16rem]"
           >
-            {busy ? "Opening…" : `Write to ${firstName}`}
+            <span className="truncate">
+              {busy ? "Opening…" : `Write to ${firstName}`}
+            </span>
           </Button>
         )}
       </div>
